@@ -54,12 +54,12 @@ type
     procedure bUpdateClick(Sender: TObject);
     procedure eHouse_numberKeyPress(Sender: TObject; var Key: Char);
     procedure FormActivate(Sender: TObject);
-    procedure FormDeactivate(Sender: TObject);
     procedure FormCreate(Sender: TObject);
     procedure qFlatsAfterScroll(DataSet: TDataSet);
     procedure aChangeMeasurerHistoryExecute(Sender: TObject);
     procedure aChangeMeasurerExecute(Sender: TObject);
     procedure aInsertMeasureValueExecute(Sender: TObject);
+    procedure qProcResultAfterScroll(DataSet: TDataSet);
   private
     FUpdatePermit: Boolean;
     { Private declarations }
@@ -72,8 +72,6 @@ type
     { Public declarations }
     procedure FormScale(const M, N : Integer);
     procedure UpdateFlats;
-
-    property UpdatePermit : Boolean read FUpdatePermit write SetUpdatePermit;
   end;
 
 //var frmMeasureValues: TfrmMeasureValues;
@@ -154,8 +152,14 @@ begin
     try
       CallingForm := self;
       FormScale(frmMain.Scale_M, frmMain.Scale_N);
+      //Определим источник данных
+      dbeStreet.DataSource := dsFlats;
+      dbeHouse.DataSource := dsFlats;
+      dbeFlat.DataSource := dsFlats;
+      dbeOldDate.DataSource := dsMeasureValue;
+      dbeOldValue.DataSource := dsMeasureValue;
       Idmeasurer := qMeasureValue.FieldByName('idmeasurer').AsString;
-      SetFocus;
+      eMeasureValue.SetFocus;
     except
       on E: Exception do
       begin
@@ -182,10 +186,8 @@ end;
 
 procedure TfrmMeasureValues.FormActivate(Sender: TObject);
 begin
-  //Не делаем запрос к БД во время создания формы
-  if FUpdatePermit then
-    //Покажем список квартир
-    UpdateFlats;
+  //Покажем список квартир
+  UpdateFlats;
 end;
 
 procedure TfrmMeasureValues.FormClose(Sender: TObject; var Action: TCloseAction);
@@ -196,22 +198,7 @@ end;
 
 procedure TfrmMeasureValues.FormCreate(Sender: TObject);
 begin
-  FUpdatePermit := False;
   ReadInifile;
-end;
-
-procedure TfrmMeasureValues.FormDeactivate(Sender: TObject);
-var i : Integer;
-begin
-  with frmMain do
-  begin
-    nMenuEdit.Visible := False;
-    for i := 0 to nMenuEdit.Count - 1 do
-    begin
-      nMenuEdit.Items[i].Visible := False;
-      nMenuEdit.Items[i].Action := nil;
-    end;
-  end;
 end;
 
 procedure TfrmMeasureValues.FormScale(const M, N: Integer);
@@ -227,13 +214,28 @@ end;
 
 procedure TfrmMeasureValues.qFlatsAfterScroll(DataSet: TDataSet);
 var idflataddress : String;
+  house_number, street, flat_number : String;
 begin
-//После выбора другой квартиры обновим информацию о показаниях счетчиков
-  if qFlats.Active and not qFlats.Eof then
+  //После выбора другой квартиры обновим информацию о показаниях счетчиков
+  if not qFlats.ReadOnly and qFlats.Active and not qFlats.Eof then
+  begin
+    idflataddress := qFlats.FieldByName('ID').AsString;
+    street := qFlats.FieldByName('street').AsString;
+    house_number := qFlats.FieldByName('house_number').AsString;
+    flat_number := qFlats.FieldByName('flat_number').AsString;
+    UpdateMeasureValue(idflataddress);
+  end;
+end;
+
+procedure TfrmMeasureValues.qProcResultAfterScroll(DataSet: TDataSet);
+//var idflataddress : String;
+begin
+  //После выбора другой квартиры обновим информацию о показаниях счетчиков
+ { if qFlats.Active and not qFlats.Eof then
   begin
     idflataddress := qFlats.FieldByName('ID').AsString;
     UpdateMeasureValue(idflataddress);
-  end;
+  end;  }
 end;
 
 procedure TfrmMeasureValues.UpdateMeasureValue(const idflataddress: string);

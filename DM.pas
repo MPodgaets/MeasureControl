@@ -39,16 +39,6 @@ type
 
   public
     { Public declarations }
-  //  procedure UpdateFlats(AParams : TFDParams);
-   // procedure UpdateMeasurers(AParams : TFDParams);
-  //  procedure UpdateFreeMeasurers(AParams : TFDParams);
- //   procedure InsertMeasureValue(AParams : TFDParams);
-    //procedure InsertMeasurer(AParams : TFDParams);
-   // procedure ChangeMeasurer(AParams : TFDParams);
-    //procedure GetNotVerificMeasurers(AParams : TFDParams);
-   // procedure GetStreets;
-    //procedure GetHouse_numbers(const aStreet : string);
-    //procedure GetChangeMeasurerHistory;
     function GetSQLMeasurers(aSql : String; const AParams : TFDParams; var BParams : array of Variant):String;
     procedure GetUsers(const aUsers : TStrings);
     procedure CloseConnection;
@@ -296,100 +286,6 @@ begin
     Result := Result + 'Protocol=TCPIP;Server=' + fbSecurity.Host + ';';
 end;
 
-{procedure TfrmDM.GetHouse_numbers(const aStreet: string);
-var sqlHouse_numbers : string;
-  FQueryThread_House : TQueryThread;
-  ind : Integer;
-  BParams : TFDParams;
-begin
-  //Выберем номера домов для выбранной улицы
-  sqlHouse_numbers := 'SELECT DISTINCT F.HOUSE_NUMBER FROM VWFLATS AS F' +
-  ' WHERE F.STREET LIKE :STREET';
-  if FQueryLst.IndexOf('House') = -1 then
-  begin
-    BParams := TFDParams.Create;
-    try
-      //Создадим нить в остановленном состоянии
-      FQueryThread_House := TQueryThread.Create(True);
-      try
-        FQueryLst.AddObject('House',FQueryThread_House);
-        with FQueryThread_House do
-        begin
-          FreeOnTerminate := True;
-          OnTerminate := QueryThread_OnTerminate;
-          Priority := tpLower;
-          BParams.Add('STREET', aStreet, ptInput);
-          //Инициализация переменных нити
-          if Init(fdcMeasureControl, sqlHouse_numbers, BParams, 'qHouse_numbers',
-            nil) then
-          begin
-            frmMain.SetThreadStatus('Запрос списка домов для ' + aStreet);
-            Start;
-          end;
-        end;
-      except
-         on E: Exception do   // on EConvertError do
-          begin
-           FQueryThread_House.Free;
-           ind := FQueryLst.IndexOf('House');
-           if ind > - 1 then
-            FQueryLst.Delete(ind);
-           Application.MessageBox(PChar('Ошибка : ' +
-           e.Message), 'Ошибка', 0);
-          end;
-      end;
-    finally
-      if Assigned(BParams) then BParams.Free;
-    end;
-  end;
-end; }
-
-{procedure TfrmDM.GetNotVerificMeasurers(AParams : TFDParams);
-var sqlMeasurers : string;
-  ind : Integer;
-  FQueryThread_NotVerific : TQueryThread;
-begin
-  //Выберем счетчики с истекшим сроком поверки
-  sqlMeasurers := 'SELECT IDMEASURER, FLAT_NUMBER, FACTORY_NUMBER ' +
-    ' FROM GET$NOT$VERIFIC$MEASURERS(:STREET, :HOUSE_NUMBER)';
-  try
-    if FQueryLst.IndexOf('NotVerific') = -1 then
-    begin
-      //Создадим нить в остановленном состоянии
-      FQueryThread_NotVerific := TQueryThread.Create(True);
-      try
-        FQueryLst.AddObject('NotVerific',FQueryThread_NotVerific);
-        with FQueryThread_NotVerific do
-        begin
-          FreeOnTerminate := True;
-          OnTerminate := QueryThread_OnTerminate;
-          Priority := tpLower;
-          //Инициализация переменных нити
-          if Init(fdcMeasureControl, sqlMeasurers, AParams,
-            'qNotVerificMeasurers', nil) then
-          begin
-            frmMain.SetThreadStatus('Запрос списка счетчиков с истекшим сроком поверки');
-            Start;
-          end;
-        end;
-      except
-         on E: Exception do   // on EConvertError do
-          begin
-           FQueryThread_NotVerific.Free;
-           ind := FQueryLst.IndexOf('NotVerific');
-           if ind > -1 then
-            FQueryLst.Delete(ind);
-           Application.MessageBox(PChar('Ошибка : ' +
-           e.Message), 'Ошибка', 0);
-          end;
-      end;
-    end;
-  finally
-    //Освободим память для списка параметров
-    if Assigned(AParams) then AParams.Free;
-  end;
-end;  }
-
 //Генерация условия where для запроса
 function TfrmDM.GetSQLMeasurers(aSql: String; const AParams: TFDParams; var BParams : array of Variant): String;
 var sqlWhere : String;
@@ -449,47 +345,6 @@ begin
   Result := sqlWhere;
 end;
 
-{procedure TfrmDM.GetStreets;
-var sqlStreets : string;
-  ind : Integer;
-  FQueryThread_Street : TQueryThread;
-begin
-  //Выберем улицы
-  sqlStreets := 'SELECT DISTINCT F.STREET FROM VWFLATS AS F';
-  if FQueryLst.IndexOf('Street') = -1 then
-  begin
-    //Создадим нить в остановленном состоянии
-    FQueryThread_Street := TQueryThread.Create(True);
-    try
-      //Сохраняем нить в списке нитей
-      FQueryLst.AddObject('Street',FQueryThread_Street);
-      with FQueryThread_Street do
-      begin
-        FreeOnTerminate := True;
-        OnTerminate := QueryThread_OnTerminate;
-        Priority := tpLower;
-        //Инициализация переменных нити
-        if Init(fdcMeasureControl, sqlStreets, nil, 'qStreets',
-          nil) then
-        begin
-          frmMain.SetThreadStatus('Запрос списка улиц');
-          Start;
-        end;
-      end;
-    except
-       on E: Exception do   // on EConvertError do
-        begin
-         FQueryThread_Street.Free;
-         ind := FQueryLst.IndexOf('Street');
-         if ind > -1 then
-          FQueryLst.Delete(ind);
-         Application.MessageBox(PChar('Ошибка : ' +
-         e.Message), 'Ошибка', 0);
-        end;
-    end;
-  end;
-end; }
-
 procedure TfrmDM.GetUsers(const aUsers: TStrings);
 begin
   try
@@ -515,98 +370,6 @@ begin
          e.Message), 'Ошибка', 0);
   end;
 end;
-
-{procedure TfrmDM.InsertMeasurer(AParams: TFDParams);
-var sqlInsMeasurer : String;
-  FQueryThread_NewMeasurer : TQueryThread;
-  ind : Integer;
-begin
-  //Добавление счетчика
-  sqlInsMeasurer := 'select * from measurer$new(:factory_number,' +
-    ' :check_date, :next_check_date)';
-  try
-    if FQueryLst.IndexOf('NewMeasurer') = -1 then
-    begin
-      //Создадим нить в остановленном состоянии
-      FQueryThread_NewMeasurer := TQueryThread.Create(True);
-      try
-        FQueryLst.AddObject('NewMeasurer',FQueryThread_NewMeasurer);
-        with FQueryThread_NewMeasurer do
-        begin
-          FreeOnTerminate := True;
-          OnTerminate := QueryThread_OnTerminate;
-          Priority := tpLower;
-          //Инициализация переменных нити
-          if Init(fdcMeasureControl, sqlInsMeasurer, AParams,
-            'qProcResult', nil) then
-          begin
-            frmMain.SetThreadStatus('Добавление счетчика');
-            Start;
-          end;
-        end;
-      except
-       on E: Exception do   // on EConvertError do
-        begin
-         FQueryThread_NewMeasurer.Free;
-         ind := FQueryLst.IndexOf('NewMeasurer');
-         if ind > -1 then
-          FQueryLst.Delete(ind);
-         Application.MessageBox(PChar('Ошибка : ' +
-         E.Message), 'Ошибка', 0);
-        end;
-      end;
-    end;
-  finally
-    //Освободим память для списка параметров
-    if Assigned(AParams) then AParams.Free;
-  end;
-end;  }
-
-{procedure TfrmDM.InsertMeasureValue(AParams: TFDParams);
-var sqlInsMeasureValue : String;
-  FQueryThread_InsMValue : TQueryThread;
-  ind : Integer;
-begin
-//Вставка показаний счетчика
-  sqlInsMeasureValue := 'select * from measure$value$new(:idmeasurer$str,' +
-    ':measure$date, :measure$value)';
-  try
-    if FQueryLst.IndexOf('InsMValue') = -1 then
-    begin
-      //Создадим нить в остановленном состоянии
-      FQueryThread_InsMValue := TQueryThread.Create(True);
-      try
-        FQueryLst.AddObject('InsMValue',FQueryThread_InsMValue);
-        with FQueryThread_InsMValue do
-        begin
-          FreeOnTerminate := True;
-          OnTerminate := QueryThread_OnTerminate;
-          Priority := tpLower;
-          //Инициализация переменных нити
-          if Init(fdcMeasureControl, sqlInsMeasureValue, AParams,
-            'qProcResult', nil) then
-          begin
-            frmMain.SetThreadStatus('Вставка показаний счетчика');
-            Start;
-          end;
-        end;
-      except
-       on E: Exception do   // on EConvertError do
-        begin
-         FQueryThread_InsMValue.Free;
-         ind := FQueryLst.IndexOf('InsMValue');
-         if ind > -1 then
-          FQueryLst.Delete(ind);
-         Application.MessageBox(PChar('Ошибка : ' +
-         E.Message), 'Ошибка', 0);
-        end;
-      end;
-    end;
-  finally
-    //Освободим память для списка параметров
-    if Assigned(AParams) then AParams.Free;
-  end;
-end;   }
 
 procedure TfrmDM.InsertUser(AParams: TFDParams);
 begin
@@ -644,10 +407,13 @@ end;
 
 //Нить закончила работу
 procedure TfrmDM.QueryThread_OnTerminate(Sender: TObject);
-var
-  ind : Integer;
+var   ind : Integer;
   BMemTable : TFDMemTable;
+  field1_name : String;
+  field1_value : Variant;
 begin
+  field1_name := '';
+  field1_value := '';
   if Sender is TQueryThread then
   try
     BMemTable := (Sender as TQueryThread).MemTable;
@@ -656,12 +422,25 @@ begin
     begin
       with BMemTable do
       begin
+        //Запомним имя и значение первого столбца текущей строки
+        if not IsEmpty then
+        begin
+          field1_name := Fields[0].FieldName;
+          field1_value := Fields[0].Value;
+        end;
         DisableControls;
         //Закроем набор данных и очистим поля
         Close;
         Fields.Clear;  //EmptyDataSet
+        ReadOnly := True;
         //Скопируем результаты запроса в MemTable и откроем его
         AppendData((Sender as TQueryThread).Qry); //набор данных полностью HitEOF=True, default
+        ReadOnly := False;
+        if field1_name <> '' then
+        //Установим текущую строку с помощью имени и значения первого столбца
+          Locate(field1_name, field1_value, [])
+        else First;
+
         EnableControls;
       end;
     end;
@@ -694,178 +473,5 @@ begin
       Actions[i].Enabled := UsersVis;
   end;
 end;
-
-{procedure TfrmDM.UpdateFlats(AParams : TFDParams);
-var sqlFlats, sqlWhere : String;
-  ind : Integer;
-  FQueryThread_Flat : TQueryThread;
-begin
-  sqlWhere := '';
-//Выберем квартиры
-  sqlFlats := 'SELECT F.ID, F.STREET, F.HOUSE_NUMBER, F.FLAT_NUMBER' +
-    ' FROM VWADDRESSES AS F';
-  try
-    if FQueryLst.IndexOf('Flat') = -1 then
-    begin
-      //Создадим нить в остановленном состоянии
-      FQueryThread_Flat := TQueryThread.Create(True);
-      try
-        FQueryLst.AddObject('Flat',FQueryThread_Flat);
-        //Если определен параметр "Улица"
-        Param1 := AParams.FindParam('STREET');
-        if Assigned(Param1) then
-        begin
-          sqlWhere := '(F.STREET LIKE ''%'' '+'||:STREET ||' + ' ''%'' )';
-          SetLength(BParams,1);
-          BParams[0] := Variant(Param1.AsString);
-        end;
-        //Если определены параметр "Номер дома"
-        Param1 := AParams.FindParam('HOUSE_NUMBER');
-        if Assigned(Param1) then
-        begin
-          if sqlWhere <> '' then sqlWhere := sqlWhere + ' AND ';
-            sqlWhere := sqlWhere + '(F.HOUSE_NUMBER = :HOUSE_NUMBER)';
-          ind := Length(BParams);
-          SetLength(BParams,ind + 1);
-          BParams[ind] := Variant(Param1.AsInteger);
-        end;
-
-        if sqlWhere <> '' then
-          sqlFlats := sqlFlats + ' WHERE ' + sqlWhere;
-
-        with FQueryThread_Flat do
-        begin
-          FreeOnTerminate := True;
-          OnTerminate := QueryThread_OnTerminate;
-          Priority := tpLower;
-          //Инициализация переменных нити
-          if Init(fdcMeasureControl, sqlFlats, AParams, 'qFlats',
-            nil) then
-          begin
-            frmMain.SetThreadStatus('Запрос списка квартир');
-            Start;
-          end;
-        end;
-      except
-         on E: Exception do   // on EConvertError do
-          begin
-           FQueryThread_Flat.Free;
-           ind := FQueryLst.IndexOf('Flat');
-           if ind > -1 then
-            FQueryLst.Delete(ind);
-           Application.MessageBox(PChar('Ошибка : ' +
-           e.Message), 'Ошибка', 0);
-          end;
-      end;
-    end;
-  finally
-    //Освободим память для списка параметров
-    if Assigned(AParams) then AParams.Free;
-  end;
-end;   }
-
-{procedure TfrmDM.UpdateFreeMeasurers(AParams: TFDParams);
-var sqlMeasurers, sqlWhere : String;
-  FQueryThread_FreeMeasurer : TQueryThread;
-  ind : Integer;
-begin
-  //Запрос списка счетчиков, неустановленных в квартирах
-  sqlMeasurers := 'SELECT M.ID, M.FACTORY_NUMBER, M.CHECK_DATE,' +
-  ' M.NEXT_CHECK_DATE FROM VWFREE$MEASURERS AS M';
-  try
-    if FQueryLst.IndexOf('FreeMeasurer') = -1 then
-    begin
-      //Создадим нить в остановленном состоянии
-      FQueryThread_FreeMeasurer := TQueryThread.Create(True);
-      try
-        FQueryLst.AddObject('FreeMeasurer',FQueryThread_FreeMeasurer);
-        SetLength(BParams, AParams.Count);
-        sqlWhere := GetSqlMeasurers(sqlMeasurers, AParams, BParams);
-        if sqlWhere <> '' then
-          sqlMeasurers := sqlMeasurers + ' WHERE ' + sqlWhere;
-
-        with FQueryThread_FreeMeasurer do
-        begin
-          FreeOnTerminate := True;
-          OnTerminate := QueryThread_OnTerminate;
-          Priority := tpLower;
-          //Инициализация переменных нити
-          if Init(fdcMeasureControl, sqlMeasurers, AParams,
-            'qFreeMeasurers', nil) then
-          begin
-            frmMain.SetThreadStatus('Запрос списка счетчиков, неустановленных в квартирах');
-            Start;
-          end;
-        end;
-      except
-         on E: Exception do   // on EConvertError do
-          begin
-           FQueryThread_FreeMeasurer.Free;
-           ind := FQueryLst.IndexOf('FreeMeasurer');
-           if ind > -1 then
-            FQueryLst.Delete(ind);
-           Application.MessageBox(PChar('Ошибка : ' +
-           e.Message), 'Ошибка', 0);
-          end;
-      end;
-    end;
-  finally
-    //Освободим память для списка параметров
-    if Assigned(AParams) then AParams.Free;
-  end;
-end;{
-
-{procedure TfrmDM.UpdateMeasurers(AParams : TFDParams);
-var sqlMeasurers, sqlWhere : String;
-  BParams : array of Variant;
-  FQueryThread_Measurer : TQueryThread;
-  ind : Integer;
-
-begin
-  //Запрос списка установленных счетчиков
-  sqlMeasurers := 'SELECT M.ID, M.FACTORY_NUMBER, M.CHECK_DATE,' +
-  ' M.NEXT_CHECK_DATE FROM VWMEASURERS AS M';
-  try
-    if FQueryLst.IndexOf('Measurer') = -1 then
-    begin
-      //Создадим нить в остановленном состоянии
-      FQueryThread_Measurer := TQueryThread.Create(True);
-      try
-        FQueryLst.AddObject('Measurer',FQueryThread_Measurer);
-        SetLength(BParams, AParams.Count);
-        sqlWhere := GetSqlMeasurers(sqlMeasurers, AParams, BParams);
-        if sqlWhere <> '' then
-          sqlMeasurers := sqlMeasurers + ' WHERE ' + sqlWhere;
-
-        with FQueryThread_Measurer do
-        begin
-          FreeOnTerminate := True;
-          OnTerminate := QueryThread_OnTerminate;
-          Priority := tpLower;
-          //Инициализация переменных нити
-          if Init(fdcMeasureControl, sqlMeasurers, AParams, 'qMeasurers',
-            nil) then
-          begin
-            frmMain.SetThreadStatus('Запрос списка установленных счетчиков');
-            Start;
-          end;
-        end;
-      except
-         on E: Exception do   // on EConvertError do
-          begin
-           FQueryThread_Measurer.Free;
-           ind := FQueryLst.IndexOf('Measurer');
-           if ind > -1 then
-            FQueryLst.Delete(ind);
-           Application.MessageBox(PChar('Ошибка : ' +
-           e.Message), 'Ошибка', 0);
-          end;
-      end;
-    end;
-  finally
-    //Освободим память для списка параметров
-    if Assigned(AParams) then AParams.Free;
-  end;
-end; }
 
 end.

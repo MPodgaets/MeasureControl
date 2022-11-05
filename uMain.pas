@@ -179,12 +179,7 @@ procedure TfrmMain.aMeasureValuesExecute(Sender: TObject);
 var frmMeasureValues: TfrmMeasureValues;
 begin
   frmMeasureValues := TfrmMeasureValues.Create(Application);
-  with frmMeasureValues do
-  begin
-    FormScale(FM,FN);
-    UpdatePermit := True;
-    UpdateFlats;
-  end;
+  frmMeasureValues.FormScale(FM,FN);
 end;
 
 procedure TfrmMain.aNotVerificMeasurersExecute(Sender: TObject);

@@ -32,6 +32,7 @@ type
     procedure qStreetsAfterOpen(DataSet: TDataSet);
     procedure qHouse_numbersAfterOpen(DataSet: TDataSet);
   private
+    FUpdatePermit: Boolean;
     { Private declarations }
     procedure UpdateStreets;
     procedure UpdateHouse_numbers;
@@ -39,10 +40,13 @@ type
     procedure WriteInifile;
     procedure GetHouse_number;
     procedure GetStreets;
+    procedure SetUpdatePermit(const Value: Boolean);
   public
     { Public declarations }
     procedure FormScale(const M, N : Integer);
     procedure UpdateNotVerificMeasurers;
+
+    property UpdatePermit : Boolean read FUpdatePermit write SetUpdatePermit;
   end;
 
 //var frmList: TfrmList;
@@ -65,7 +69,8 @@ end;
 
 procedure TfrmList.FormActivate(Sender: TObject);
 begin
-  UpdateNotVerificMeasurers;
+  if FUpdatePermit then
+    UpdateNotVerificMeasurers;
 end;
 
 procedure TfrmList.FormClose(Sender: TObject; var Action: TCloseAction);
@@ -75,18 +80,10 @@ begin
 end;
 
 procedure TfrmList.FormCreate(Sender: TObject);
-var AColumn, BColumn : TColumn;
 begin
+  FUpdatePermit := False;
   GetStreets;
   ReadInifile;
-  {AColumn := dbgList.Columns.Add;
-  AColumn.Title.Caption := 'Номер квартиры';
-  AColumn.FieldName := 'FLAT_NUMBER';
-  AColumn.Width := 100;
-  AColumn := dbgList.Columns.Add;
-  AColumn.Title.Caption := 'Заводской номер';
-  AColumn.FieldName := 'FACTORY_NUMBER';
-  AColumn.Width := 200;  }
 end;
 
 procedure TfrmList.FormScale(const M, N: Integer);
@@ -130,7 +127,6 @@ begin
     BParams.Add('STREET', cbStreets.Text, ptInput);
     frmDM.DBExecuteSQL(sqlStreets, BParams, qStreets, nil,
       'Street', True);
-    //frmDM.GetHouse_numbers(cbStreets.Text);
   finally
     if Assigned(BParams) then BParams.Free;
   end;
@@ -164,6 +160,11 @@ begin
    end;
 end;
 
+procedure TfrmList.SetUpdatePermit(const Value: Boolean);
+begin
+  FUpdatePermit := Value;
+end;
+
 procedure TfrmList.UpdateHouse_numbers;
 begin
   with qHouse_numbers do
@@ -176,6 +177,8 @@ begin
     end;
   end;
   cbHouse_numbers.ItemIndex := 0;
+  UpdatePermit := True;
+  UpdateNotVerificMeasurers;
 end;
 
 procedure TfrmList.UpdateNotVerificMeasurers;
@@ -186,7 +189,6 @@ begin
   //Выберем счетчики с истекшим сроком поверки
   sqlMeasurers := 'SELECT IDMEASURER, FLAT_NUMBER, FACTORY_NUMBER ' +
     ' FROM GET$NOT$VERIFIC$MEASURERS(:STREET, :HOUSE_NUMBER)';
-
   //Запишем значения параметров
   LParams := TFDParams.Create;
   try

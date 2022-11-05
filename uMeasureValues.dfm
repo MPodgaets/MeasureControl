@@ -17,7 +17,6 @@ object frmMeasureValues: TfrmMeasureValues
   OnActivate = FormActivate
   OnClose = FormClose
   OnCreate = FormCreate
-  OnDeactivate = FormDeactivate
   PixelsPerInch = 96
   TextHeight = 13
   object pData: TPanel
@@ -68,7 +67,7 @@ object frmMeasureValues: TfrmMeasureValues
           Height = 168
           Align = alClient
           DataSource = dsMeasureValue
-          Options = [dgTitles, dgIndicator, dgColumnResize, dgColLines, dgRowLines, dgTabs, dgConfirmDelete, dgCancelOnExit, dgTitleClick, dgTitleHotTrack]
+          Options = [dgTitles, dgIndicator, dgColumnResize, dgColLines, dgRowLines, dgTabs, dgRowSelect, dgAlwaysShowSelection, dgConfirmDelete, dgCancelOnExit, dgTitleClick, dgTitleHotTrack]
           TabOrder = 0
           TitleFont.Charset = DEFAULT_CHARSET
           TitleFont.Color = clWindowText
@@ -164,7 +163,7 @@ object frmMeasureValues: TfrmMeasureValues
         Height = 290
         Align = alClient
         DataSource = dsFlats
-        Options = [dgTitles, dgIndicator, dgColumnResize, dgColLines, dgRowLines, dgTabs, dgConfirmDelete, dgCancelOnExit, dgTitleClick, dgTitleHotTrack]
+        Options = [dgTitles, dgIndicator, dgColumnResize, dgColLines, dgRowLines, dgTabs, dgRowSelect, dgAlwaysShowSelection, dgConfirmDelete, dgCancelOnExit, dgTitleClick, dgTitleHotTrack]
         PopupMenu = pmMeasureValues
         TabOrder = 0
         TitleFont.Charset = DEFAULT_CHARSET
@@ -352,6 +351,7 @@ object frmMeasureValues: TfrmMeasureValues
     Top = 312
   end
   object qProcResult: TFDMemTable
+    AfterScroll = qProcResultAfterScroll
     FetchOptions.AssignedValues = [evMode]
     FetchOptions.Mode = fmAll
     ResourceOptions.AssignedValues = [rvSilentMode]
