@@ -16,6 +16,7 @@ object frmMeasureValues: TfrmMeasureValues
   Visible = True
   OnActivate = FormActivate
   OnClose = FormClose
+  OnCloseQuery = FormCloseQuery
   OnCreate = FormCreate
   PixelsPerInch = 96
   TextHeight = 13

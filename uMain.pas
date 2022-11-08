@@ -92,6 +92,7 @@ type
     procedure BuildListFromDBGrid(const aDBGrid: TDBGrid; const aFieldNames: TStrings; aSelStrings :TStrings);
     procedure CloseDBGridForms;
     procedure SetThreadStatus(const AStatus : String);
+    function IsFormExist(const AForm : TForm) : Boolean;
 
     property LoginCount : Integer read FLoginCount write SetLoginCount;
     property IsSysdba : Boolean read FIsSysdba write SetIsSysdba;
@@ -168,10 +169,9 @@ begin
   with frmMeasurers do
   begin
     FormScale(FM,FN);
-    KindMeasurers := kmInstalled;
-    UpdatePermit := True;
-    CallingForm := Self;
-    UpdateMeasurers;
+    //окно открывается как справочник
+    //выбираются установленные счетчики
+    Init(self, False, kmInstalled);
   end;
 end;
 
@@ -336,6 +336,16 @@ begin
     self.Scaled := True;
     self.ScaleBy(M,N);
   end;
+end;
+
+function TfrmMain.IsFormExist(const AForm: TForm): Boolean;
+var i : Integer;
+begin
+  i := 0;
+  repeat
+    Result := self.MDIChildren[i].Equals(AForm);
+    Inc(i);
+  until Result or (i = self.MDIChildCount);
 end;
 
 procedure TfrmMain.ReadInifile;

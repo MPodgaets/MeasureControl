@@ -33,10 +33,11 @@ type
     btnMeasurer: TButton;
     Label7: TLabel;
     eMeasureValue: TEdit;
-    qProcResult: TFDMemTable;
+    fdtmInsMeasurer: TFDMemTable;
     alFlat: TActionList;
     alChoiсeMeasurer: TAction;
     alChangeMeasurer: TAction;
+    fdmtInsMValue: TFDMemTable;
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
     procedure btnCancelClick(Sender: TObject);
     procedure FormCloseQuery(Sender: TObject; var CanClose: Boolean);
@@ -46,18 +47,21 @@ type
     { Private declarations }
     FID_new_measurer : String;
     FMeasurers: TfrmMeasurers;
+    FCallingForm : TForm;
+
     procedure TryUpdateMeasurer(var Message: TMessage); message WM_CHOICE_MEASURER;
+    procedure TryCloseMeasurers(var Message: TMessage); message WM_CLOSE_MEASURERS;
   public
     { Public declarations }
     procedure FormScale(const M, N : Integer);
-    procedure SetFactory_Numbers(const Value: TStrings);
+    procedure Init(const ACallingForm : TForm; const AFactory_Numbers : TStrings; const AFlatsDataSource : TDataSource);
   end;
 
 implementation
 
 {$R *.dfm}
 
-uses DM;
+uses DM, System.UITypes;
 
 procedure TfrmFlats.alChangeMeasurerExecute(Sender: TObject);
 var ChMParams, InsMVParams : TFDParams;
@@ -84,7 +88,7 @@ begin
       end;
       frmMain.SetThreadStatus('Изменение характеристик счетчика');
      //Заменим счетчик
-      frmDM.DBExecuteSQL(sqlChangeMeasurer, ChMParams, qProcResult, nil,
+      frmDM.DBExecuteSQL(sqlChangeMeasurer, ChMParams, fdtmInsMeasurer, nil,
       'ChangeMeasurer', True);
 
       //Определим параметры для ввода показаний счетчика
@@ -99,7 +103,7 @@ begin
       sqlInsMeasureValue := 'select * from measure$value$new(:idmeasurer$str,' +
         ':measure$date, :measure$value)';
       frmMain.SetThreadStatus('Вставка показаний счетчика');
-      frmDM.DBExecuteSQL(sqlInsMeasureValue, InsMVParams, qProcResult, nil,
+      frmDM.DBExecuteSQL(sqlInsMeasureValue, InsMVParams, fdmtInsMValue, nil,
         'InsMValue', True);
     except
       on E: Exception do
@@ -121,15 +125,10 @@ begin
   with FMeasurers do
   begin
     FormScale(frmMain.Scale_M,frmMain.Scale_N);
-    //окно открывается как диалог
-    IsDialog := True;
     Name := 'frmFreeMeasurers';
+    //окно открывается как диалог
     //выбираются неустановленные счетчики
-    KindMeasurers := kmFree;
-    UpdatePermit := True;
-    CallingForm := Self;
-    //При активизации формы обновим список счетчиков
-    UpdateMeasurers;
+    Init(self, True, kmFree);
   end;
 end;
 
@@ -145,13 +144,16 @@ end;
 
 procedure TfrmFlats.FormCloseQuery(Sender: TObject; var CanClose: Boolean);
 begin
+//Проверим открыт ли диалог выбора счетчика
   if Assigned(FMeasurers) then
   begin
     MessageDlg('Это окно нельзя закрыть пока открыто окно выбора счетчика', mtWarning, [mbOk], 0);
     CanClose := False;
+    FMeasurers.SetFocus;
   end;
 end;
 
+//Масштабирование формы
 procedure TfrmFlats.FormScale(const M, N : Integer);
 begin
   if M > N then
@@ -163,25 +165,41 @@ begin
   end;
 end;
 
-procedure TfrmFlats.SetFactory_Numbers(const Value: TStrings);
+//Инициализация формы
+procedure TfrmFlats.Init(const ACallingForm: TForm;
+  const AFactory_Numbers: TStrings; const AFlatsDataSource: TDataSource);
 begin
-  if Assigned(Value) then
+  FCallingForm := ACallingForm;
+  dbeStreet.DataSource := AFlatsDataSource;
+  dbeHouse.DataSource := AFlatsDataSource;
+  dbeFlat.DataSource := AFlatsDataSource;
+  //Скопируем список заводских номеров счетчиков, установленных в квартире
+  if Assigned(AFactory_Numbers) then
   with cbFactory_numbers do
   begin
-    Items.Assign(Value);
+    Items.Assign(AFactory_Numbers);
     ItemIndex := 0;
   end;
 end;
 
+procedure TfrmFlats.TryCloseMeasurers(var Message: TMessage);
+begin
+//Диалог закрыт - обнулим указатель FMeasurers
+  FMeasurers := nil;
+end;
+
 procedure TfrmFlats.TryUpdateMeasurer(var Message: TMessage);
-//Счетчик выбран
 var AParams : TFDParams;
 begin
+  //Счетчик выбран, то есть диалог закрыт - обнулим указатель FMeasurers
+  FMeasurers := nil;
+  //указатель на список параметров нового счетчика передается в параметре сообщения
   AParams := TFDParams(Message.LParam);
   try
     //Запишем характеристики нового счетчика
     FID_new_measurer := AParams.FindParam('ID').AsString;
     eFactory_Number.Text := AParams.FindParam('FACTORY_NUMBER').AsString;
+
   finally
     if Assigned(AParams) then
       AParams.Free;

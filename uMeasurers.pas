@@ -72,12 +72,9 @@ type
 
     procedure TryInsertMeasurer(var Message: TMessage); message WM_NEW_MEASURER;
     procedure TryCloseMeasurer(var Message: TMessage); message WM_CLOSE_MEASURER;
-
-    procedure SetUpdatePermit(const Value: Boolean);
     procedure InsertMeasurer(AParams: TFDParams);
-    procedure SetCallingForm(const Value: TForm);
     procedure SetIsDialog(const Value: Boolean);
-    procedure SetKindMeasurers(const Value: TKindMeasurer);
+
   protected
     procedure ReadInifile;
     procedure WriteInifile;
@@ -86,11 +83,7 @@ type
     { Public declarations }
     procedure UpdateMeasurers;
     procedure FormScale(const M, N : Integer);
-
-    property IsDialog : Boolean read FIsDialog write SetIsDialog;
-    property CallingForm : TForm read FCallingForm write SetCallingForm;
-    property KindMeasurers : TKindMeasurer read FKindMeasurers write SetKindMeasurers;
-    property UpdatePermit : Boolean read FUpdatePermit write SetUpdatePermit;
+    procedure Init(const ACallingForm: TForm; const AIsDialog: Boolean; const AKindMeasurers: TKindMeasurer);
   end;
 
 //var frmMeasurers: TfrmMeasurers;
@@ -139,6 +132,9 @@ end;
 
 procedure TfrmMeasurers.btnCancelClick(Sender: TObject);
 begin
+  //Отправим сообщение о закрытии диалога
+  if Assigned(FCallingForm) then
+    PostMessage(FCallingForm.Handle, WM_CLOSE_MEASURERS, 0, 0);
   Close;
 end;
 
@@ -156,8 +152,8 @@ begin
         LParams.Add('FACTORY_NUMBER', FieldByName('FACTORY_NUMBER').AsVariant, ptInput);
       end;
      //Отправим сообщение - выбран счетчик
-      if Assigned(Owner) and (Owner is TForm) then
-        PostMessage((Owner AS TForm).Handle, WM_CHOICE_MEASURER, 0, Integer(LParams));
+      if Assigned(FCallingForm) then
+        PostMessage(FCallingForm.Handle, WM_CHOICE_MEASURER, 0, Integer(LParams));
     except
       on E: Exception do
       begin
@@ -221,13 +217,7 @@ procedure TfrmMeasurers.FormActivate(Sender: TObject);
 begin
 //Не делаем запрос к БД во время создания формы
   if FUpdatePermit then
-  begin
     UpdateMeasurers;
-    if not FIsDialog then
-    begin
-
-    end;
-  end;
 end;
 
 procedure TfrmMeasurers.FormClose(Sender: TObject; var Action: TCloseAction);
@@ -242,6 +232,7 @@ begin
   begin
     MessageDlg('Это окно нельзя закрыть пока открыто окно свойств счетчика', mtWarning, [mbOk], 0);
     CanClose := False;
+    FMeasurer.SetFocus;
   end;
 end;
 
@@ -263,6 +254,21 @@ begin
     self.Scaled := True;
     self.ScaleBy(M,N);
   end;
+end;
+
+procedure TfrmMeasurers.Init(const ACallingForm: TForm;
+  const AIsDialog: Boolean; const AKindMeasurers: TKindMeasurer);
+begin
+  //Запишем вид окна: диалог или справочник
+  SetIsDialog(AIsDialog);
+  //Запишем тип показываемых счетчиков: установленные или свободные
+  FKindMeasurers := AKindMeasurers;
+  //запишем указатель на форму-создателя
+  FCallingForm := ACallingForm;
+  //При активизации формы обновим список счетчиков
+  UpdateMeasurers;
+  //Разрешим обновление списка счетчика при активизации формы
+  FUpdatePermit := True;
 end;
 
 procedure TfrmMeasurers.InsertMeasurer(AParams: TFDParams);
@@ -320,25 +326,11 @@ begin
    end;
 end;
 
-procedure TfrmMeasurers.SetCallingForm(const Value: TForm);
-begin
-  FCallingForm := Value;
-end;
 
 procedure TfrmMeasurers.SetIsDialog(const Value: Boolean);
 begin
   FIsDialog := Value;
   pBottom.Visible := Value;
-end;
-
-procedure TfrmMeasurers.SetKindMeasurers(const Value: TKindMeasurer);
-begin
-  FKindMeasurers := Value;
-end;
-
-procedure TfrmMeasurers.SetUpdatePermit(const Value: Boolean);
-begin
-  FUpdatePermit := Value;
 end;
 
 procedure TfrmMeasurers.TryCloseMeasurer(var Message: TMessage);

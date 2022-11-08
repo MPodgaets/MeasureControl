@@ -5,7 +5,7 @@ interface
 uses
   Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes, Vcl.Graphics,
   Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls, Vcl.Mask,
-  Vcl.DBCtrls, Vcl.ComCtrls;
+  Vcl.DBCtrls, Vcl.ComCtrls, Data.DB;
 
 type
   TfrmMeasureValue = class(TForm)
@@ -34,17 +34,13 @@ type
   private
     { Private declarations }
     fIdmeasurer : String;
-    FCallingForm: TForm;
-    procedure SetIdmeasurer(const Value: String);
-    procedure SetCallingForm(const Value: TForm);
+    FCallingForm : TForm;
 
   public
     { Public declarations }
-    property Idmeasurer : String read fIdmeasurer write SetIdmeasurer;
-    property CallingForm : TForm read FCallingForm write SetCallingForm;
-
     procedure FormScale(const M, N : Integer);
     procedure InputMValue;
+    procedure Init(const ACallingForm : TForm; const AIdmeasurer : String; const AFlatsDataSource, AMeasureValuesDataSource : TDataSource);
   end;
 
 //var frmInputMeasureValue: TfrmInputMeasureValue;
@@ -53,10 +49,13 @@ implementation
 
 {$R *.dfm}
 
-uses DM, FireDAC.Stan.Param, Data.DB, uMain, uMessage;
+uses DM, FireDAC.Stan.Param, uMain, uMessage;
 
 procedure TfrmMeasureValue.btCancelClick(Sender: TObject);
 begin
+  //Отправим сообщение - завести показания счетчика
+  if Assigned(FCallingForm) then
+    PostMessage(FCallingForm.Handle, WM_CLOSE_MEASURE_VALUE, 0, 0);
   Close;
 end;
 
@@ -71,6 +70,7 @@ begin
   Action := caFree;
 end;
 
+//Масштабирование формы
 procedure TfrmMeasureValue.FormScale(const M, N: Integer);
 begin
   if M > N then
@@ -82,6 +82,22 @@ begin
   end;
 end;
 
+//Инициализация формы
+procedure TfrmMeasureValue.Init(const ACallingForm : TForm;  const AIdmeasurer : String; const AFlatsDataSource,
+  AMeasureValuesDataSource: TDataSource);
+begin
+  FCallingForm := ACallingForm;
+  fIdmeasurer := AIdmeasurer;
+  //Определим источники данных
+  dbeStreet.DataSource := AFlatsDataSource;
+  dbeHouse.DataSource := AFlatsDataSource;
+  dbeFlat.DataSource := AFlatsDataSource;
+  dbeOldDate.DataSource := AMeasureValuesDataSource;
+  dbeOldValue.DataSource := AMeasureValuesDataSource;
+  eMeasureValue.SetFocus;
+end;
+
+//Ввод показаний счетчика
 procedure TfrmMeasureValue.InputMValue;
 var LParams : TFDParams;
   MValue : Single;
@@ -109,16 +125,6 @@ begin
   finally
     Close;
   end;
-end;
-
-procedure TfrmMeasureValue.SetCallingForm(const Value: TForm);
-begin
-  FCallingForm := Value;
-end;
-
-procedure TfrmMeasureValue.SetIdmeasurer(const Value: String);
-begin
-  fIdmeasurer := Value;
 end;
 
 end.

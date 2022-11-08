@@ -196,7 +196,7 @@
       TabOrder = 2
     end
   end
-  object qProcResult: TFDMemTable
+  object fdtmInsMeasurer: TFDMemTable
     FetchOptions.AssignedValues = [evMode]
     FetchOptions.Mode = fmAll
     ResourceOptions.AssignedValues = [rvSilentMode]
@@ -208,8 +208,8 @@
     Top = 24
   end
   object alFlat: TActionList
-    Left = 400
-    Top = 166
+    Left = 416
+    Top = 126
     object alChoiсeMeasurer: TAction
       Caption = ' ... '
       Hint = #1042#1099#1073#1086#1088' '#1089#1074#1086#1073#1086#1076#1085#1086#1075#1086' '#1089#1095#1077#1090#1095#1080#1082#1072' '#1076#1083#1103' '#1091#1089#1090#1072#1085#1086#1074#1082#1080' '#1074' '#1082#1074#1072#1088#1090#1080#1088#1077
@@ -220,5 +220,16 @@
       Hint = #1047#1072#1084#1077#1085#1072' '#1089#1095#1077#1090#1095#1080#1082#1072
       OnExecute = alChangeMeasurerExecute
     end
+  end
+  object fdmtInsMValue: TFDMemTable
+    FetchOptions.AssignedValues = [evMode]
+    FetchOptions.Mode = fmAll
+    ResourceOptions.AssignedValues = [rvSilentMode]
+    ResourceOptions.SilentMode = True
+    UpdateOptions.AssignedValues = [uvCheckRequired, uvAutoCommitUpdates]
+    UpdateOptions.CheckRequired = False
+    UpdateOptions.AutoCommitUpdates = True
+    Left = 384
+    Top = 192
   end
 end

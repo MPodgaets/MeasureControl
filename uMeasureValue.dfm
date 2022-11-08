@@ -148,7 +148,7 @@ object frmMeasureValue: TfrmMeasureValue
       Width = 83
       Height = 21
       Date = 44815.000000000000000000
-      Time = 0.002914097225584556
+      Time = 0.002914097225584555
       TabOrder = 1
     end
   end

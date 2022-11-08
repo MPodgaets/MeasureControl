@@ -35,8 +35,7 @@ implementation
 
 { TQueryThread }
 
-uses System.SysUtils, System.DateUtils, DM, Vcl.Forms,
-FireDAC.Phys.IBWrapper;
+uses System.SysUtils, System.DateUtils, DM, Vcl.Forms, FireDAC.Phys.IBWrapper;
 
 destructor TQueryThread.Destroy;
 begin
@@ -65,16 +64,17 @@ begin
     begin
       Synchronize(
         procedure
-        var i : Integer;
+      //  var i : Integer;
         begin  //FLog
-          for i := 0 to E.ErrorCount - 1 do
-          Application.MessageBox(
-            PChar('При выполнении запроса к базе данных произошла FireDAC/DBMS ошибка: ' +
-            E.Errors[i].Message), 'Ошибка', 0);
+         // for i := 0 to E.ErrorCount - 1 do
+         // Application.MessageBox(
+         //   PChar('При выполнении запроса к базе данных произошла FireDAC/DBMS ошибка: ' +
+         //   E.Errors[i].Message), 'Ошибка', 0);
           Application.MessageBox(
             PChar('При выполнении запроса к базе данных произошла независимая DBMS ошибка: ' +
             E.Message), 'Ошибка', 0);
-        end);
+        end
+        );
 
       if FConnect.InTransaction then
       //Отменим все изменения базы данных в текущей транзакции
@@ -127,8 +127,9 @@ begin
       Synchronize(
         procedure
         begin
-          Application.MessageBox(PChar('Ошибка : ' + E.Message), 'Ошибка', 0)
-        end)
+          Application.MessageBox(PChar('Ошибка : ' + E.Message), 'Ошибка', 0);
+        end
+        );
   end;
 end;
 

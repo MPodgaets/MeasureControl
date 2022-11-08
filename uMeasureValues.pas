@@ -9,7 +9,7 @@ uses
   Vcl.DBCtrls, uMessage, FireDAC.Stan.Intf, FireDAC.Stan.Option,
   FireDAC.Stan.Param, FireDAC.Stan.Error, FireDAC.DatS, FireDAC.Phys.Intf,
   FireDAC.DApt.Intf, FireDAC.Comp.DataSet, FireDAC.Comp.Client, System.Actions,
-  Vcl.ActnList;
+  Vcl.ActnList, uMeasureValue;
 
 type
   TfrmMeasureValues = class(TForm)
@@ -60,14 +60,18 @@ type
     procedure aChangeMeasurerExecute(Sender: TObject);
     procedure aInsertMeasureValueExecute(Sender: TObject);
     procedure qProcResultAfterScroll(DataSet: TDataSet);
+    procedure FormCloseQuery(Sender: TObject; var CanClose: Boolean);
   private
-    FUpdatePermit: Boolean;
     { Private declarations }
+    //указатель на диалог для ввода показаний счетчиков
+    FMeasureValue: TfrmMeasureValue;
+
     procedure TryInsertMeasureValue(var Message: TMessage); message WM_MEASURE_VALUE_INPUT;
-    procedure SetUpdatePermit(const Value: Boolean);
+    procedure TryCloseMeasureValue(var Message: TMessage); message WM_CLOSE_MEASURE_VALUE;
     procedure ReadInifile;
     procedure WriteInifile;
     procedure UpdateMeasureValue(const idflataddress: string);
+    procedure UpdateHistoryMeasurersFlat;
   public
     { Public declarations }
     procedure FormScale(const M, N : Integer);
@@ -81,7 +85,7 @@ implementation
 {$R *.dfm}
 
 uses DM, System.IniFiles, Datasnap.DBClient,  System.UITypes,
-uMain, uMeasureValue, uFlat;
+uMain, uFlat;
 
 procedure TfrmMeasureValues.aChangeMeasurerExecute(Sender: TObject);
 var frmFlats: TfrmFlats;
@@ -106,7 +110,7 @@ begin
       Locate('idmeasurer',idmeasurer);
       EnableControls;
     end;
-    frmFlats.SetFactory_Numbers(Factory_Numbers);
+    frmFlats.Init(self, Factory_Numbers, dsFlats);
   finally
     if Assigned(Factory_Numbers) then
       Factory_Numbers.Free;
@@ -114,6 +118,15 @@ begin
 end;
 
 procedure TfrmMeasureValues.aChangeMeasurerHistoryExecute(Sender: TObject);
+begin
+  //Если стоит галочка у истории замен счетчиков
+  if aChangeMeasurerHistory.Checked then
+    UpdateHistoryMeasurersFlat;
+  //Покажем историю замен счетчика
+  self.pHistory.Visible := aChangeMeasurerHistory.Checked;
+end;
+
+procedure TfrmMeasureValues.UpdateHistoryMeasurersFlat;
 var
   sqlHistory : String;
   BParams : TFDParams;
@@ -124,42 +137,28 @@ begin
   ' GET$HISTORY$MEASURER$FLAT(:STREET, :HOUSE_NUMBER, :FLAT_NUMBER) AS F' +
   ' ORDER BY F.MEASURER$NUMBER';
 
-  if aChangeMeasurerHistory.Checked then
-  begin
-    BParams := TFDParams.Create;
-    try
-      BParams.Add('STREET', qFlats.FieldByName('STREET').AsVariant, ptInput);
-      BParams.Add('HOUSE_NUMBER', qFlats.FieldByName('HOUSE_NUMBER').AsVariant, ptInput);
-      BParams.Add('FLAT_NUMBER', qFlats.FieldByName('FLAT_NUMBER').AsVariant, ptInput);
+  BParams := TFDParams.Create;
+  try
+    BParams.Add('STREET', qFlats.FieldByName('STREET').AsVariant, ptInput);
+    BParams.Add('HOUSE_NUMBER', qFlats.FieldByName('HOUSE_NUMBER').AsVariant, ptInput);
+    BParams.Add('FLAT_NUMBER', qFlats.FieldByName('FLAT_NUMBER').AsVariant, ptInput);
 
-      frmDM.DBExecuteSQL(sqlHistory, BParams, qChangeMeasureHistory, nil,
-        'History', True);
-      //Покажем историю замен счетчика
-      self.pHistory.Visible := aChangeMeasurerHistory.Checked;
-    finally
-      if Assigned(BParams) then BParams.Free;
-    end;
+    frmDM.DBExecuteSQL(sqlHistory, BParams, qChangeMeasureHistory, nil,
+      'History', True);
+  finally
+    if Assigned(BParams) then BParams.Free;
   end;
 end;
 
 procedure TfrmMeasureValues.aInsertMeasureValueExecute(Sender: TObject);
-var frmMeasureValue: TfrmMeasureValue;
 begin
   if qMeasureValue.RecordCount > 0 then
   begin
-    frmMeasureValue:= TfrmMeasureValue.Create(Application);
-    with frmMeasureValue do
+    FMeasureValue:= TfrmMeasureValue.Create(Application);
+    with FMeasureValue do
     try
-      CallingForm := self;
       FormScale(frmMain.Scale_M, frmMain.Scale_N);
-      //Определим источник данных
-      dbeStreet.DataSource := dsFlats;
-      dbeHouse.DataSource := dsFlats;
-      dbeFlat.DataSource := dsFlats;
-      dbeOldDate.DataSource := dsMeasureValue;
-      dbeOldValue.DataSource := dsMeasureValue;
-      Idmeasurer := qMeasureValue.FieldByName('idmeasurer').AsString;
-      eMeasureValue.SetFocus;
+      Init(self, qMeasureValue.FieldByName('idmeasurer').AsString, dsFlats, dsMeasureValue);
     except
       on E: Exception do
       begin
@@ -196,6 +195,18 @@ begin
   Action := caFree;
 end;
 
+procedure TfrmMeasureValues.FormCloseQuery(Sender: TObject;
+  var CanClose: Boolean);
+begin
+//Проверим окно ввода показаний счетчика
+  if Assigned(FMeasureValue) then
+  begin
+    MessageDlg('Это окно нельзя закрыть пока открыто окно ввода показаний счетчика', mtWarning, [mbOk], 0);
+    CanClose := False;
+    FMeasureValue.SetFocus;
+  end;
+end;
+
 procedure TfrmMeasureValues.FormCreate(Sender: TObject);
 begin
   ReadInifile;
@@ -214,28 +225,26 @@ end;
 
 procedure TfrmMeasureValues.qFlatsAfterScroll(DataSet: TDataSet);
 var idflataddress : String;
-  house_number, street, flat_number : String;
 begin
   //После выбора другой квартиры обновим информацию о показаниях счетчиков
   if not qFlats.ReadOnly and qFlats.Active and not qFlats.Eof then
   begin
     idflataddress := qFlats.FieldByName('ID').AsString;
-    street := qFlats.FieldByName('street').AsString;
-    house_number := qFlats.FieldByName('house_number').AsString;
-    flat_number := qFlats.FieldByName('flat_number').AsString;
     UpdateMeasureValue(idflataddress);
+    if aChangeMeasurerHistory.Checked then
+      UpdateHistoryMeasurersFlat;
   end;
 end;
 
 procedure TfrmMeasureValues.qProcResultAfterScroll(DataSet: TDataSet);
-//var idflataddress : String;
+var idflataddress : String;
 begin
   //После выбора другой квартиры обновим информацию о показаниях счетчиков
- { if qFlats.Active and not qFlats.Eof then
+  if not qFlats.ReadOnly and qFlats.Active and not qFlats.Eof then
   begin
     idflataddress := qFlats.FieldByName('ID').AsString;
     UpdateMeasureValue(idflataddress);
-  end;  }
+  end;
 end;
 
 procedure TfrmMeasureValues.UpdateMeasureValue(const idflataddress: string);
@@ -276,15 +285,18 @@ begin
    end;
 end;
 
-procedure TfrmMeasureValues.SetUpdatePermit(const Value: Boolean);
+procedure TfrmMeasureValues.TryCloseMeasureValue(var Message: TMessage);
 begin
-  FUpdatePermit := Value;
+  //диалог закрыт - обнулим указатель на него
+  FMeasureValue := nil;
 end;
 
 procedure TfrmMeasureValues.TryInsertMeasureValue(var Message: TMessage);
 var AParams : TFDParams;
   sqlInsMeasureValue : String;
 begin
+  //диалог закрыт - обнулим указатель на него
+  FMeasureValue := nil;
   AParams := TFDParams(Message.LParam);
   //Добавим показания счетчика
   sqlInsMeasureValue := 'select * from measure$value$new(:idmeasurer$str,' +

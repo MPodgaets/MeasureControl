@@ -12,6 +12,8 @@ const WM_MEASURE_VALUE_INPUT = WM_APP + 1;
       WM_CREATE_USER = WM_APP + 6;
       WM_MODIFY_USER = WM_APP + 7;
       WM_CLOSE_MEASURER = WM_APP + 8;
+      WM_CLOSE_MEASURERS = WM_APP + 9;
+      WM_CLOSE_MEASURE_VALUE = WM_APP + 10;
 
 implementation
 

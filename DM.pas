@@ -219,63 +219,6 @@ begin
     fdUsers.Fields[i].Visible := False;
 end;
 
-{procedure TfrmDM.GetChangeMeasurerHistory;
-var sqlHistory : String;
-  BParams : TFDParams;
-  ind : Integer;
-  FQueryThread_History : TQueryThread;
-
-begin
- //История установки счетчиков в квартире
-  sqlHistory := 'SELECT F.IDMEASURER, F.FACTORY$NUMBER, F.DATE$INSTALL,' +
-  ' F.MEASURER$NUMBER FROM ' +
-  ' GET$HISTORY$MEASURER$FLAT(:STREET, :HOUSE_NUMBER, :FLAT_NUMBER) AS F' +
-  ' ORDER BY F.MEASURER$NUMBER';
-
-  if FQueryLst.IndexOf('History') = -1 then
-  begin
-    BParams := TFDParams.Create;
-    try
-      //Создадим нить в остановленном состоянии
-      FQueryThread_History := TQueryThread.Create(True);
-      try
-        FQueryLst.AddObject('History',FQueryThread_History);
-        BParams.Add('STREET', qFlats.FieldByName('STREET').AsVariant, ptInput);
-        BParams.Add('HOUSE_NUMBER', qFlats.FieldByName('HOUSE_NUMBER').AsVariant, ptInput);
-        BParams.Add('FLAT_NUMBER', qFlats.FieldByName('FLAT_NUMBER').AsVariant, ptInput);
-        with FQueryThread_History do
-        begin
-          FreeOnTerminate := True;
-          OnTerminate := QueryThread_OnTerminate;
-          Priority := tpLower;
-          //Инициализация переменных нити
-          if Init(fdcMeasureControl, sqlHistory, BParams,
-           'qChangeMeasureHistory', nil) then
-          begin
-            frmMain.SetThreadStatus('Запрос истории установки счетчиков в квартире' +
-            ' по адресу: ' + qFlats.FieldByName('STREET').AsString + ' ' +
-            qFlats.FieldByName('HOUSE_NUMBER').AsString + ' - ' +
-            qFlats.FieldByName('FLAT_NUMBER').AsString );
-            Start;
-          end;
-        end;
-      except
-         on E: Exception do   // on EConvertError do
-          begin
-           FQueryThread_History.Free;
-           ind := FQueryLst.IndexOf('History');
-           if ind > - 1 then
-            FQueryLst.Delete(ind);
-           Application.MessageBox(PChar('Ошибка : ' +
-           e.Message), 'Ошибка', 0);
-          end;
-      end;
-    finally
-      if Assigned(BParams) then BParams.Free;
-    end;
-  end;
-end;   }
-
 function TfrmDM.GetConnectionStr: String;
 begin
   //Определим строку для подключения к базе данных
