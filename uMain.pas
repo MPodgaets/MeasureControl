@@ -109,11 +109,10 @@ implementation
 
 {$R *.dfm}
 
-uses uMeasureValues, uLog, DM, uList, uDBSettings,
-uPASSWORD, uMeasurers, uMeasurer, uMeasureValue, uFlat, uUsers, uUser,
-System.UITypes, FireDAC.Stan.Param,
-FireDAC.Phys.IBWrapper, System.IniFiles,
-FireDAC.Stan.Error;       //frmMain.sbLog.Panels[0].Text
+uses System.UITypes, FireDAC.Stan.Param, FireDAC.Phys.IBWrapper,
+ System.IniFiles, FireDAC.Stan.Error,
+uLog, DM, uList, uDBSettings, uPASSWORD,
+uFlat, uUsers, uUser, uMeasureValues, uMeasurers;       //frmMain.sbLog.Panels[0].Text
 
 procedure TfrmMain.aDBSettingsExecute(Sender: TObject);
 var  frmDBSettings: TfrmDBSettings;
@@ -151,8 +150,8 @@ begin
 end;
 
 procedure TfrmMain.aMeasurersExecute(Sender: TObject);
-var frmMeasurers: TfrmMeasurers;
-    i : Integer;
+var  i : Integer;
+    FMeasurers: TfrmMeasurers;
 begin
   //Проверим открыт ли уже справочник счетчиков
   for i := 0 to MDIChildCount - 1 do
@@ -164,9 +163,9 @@ begin
   end;
 
   //Откроем справочник счетчиков
-  frmMeasurers := TfrmMeasurers.Create(Application);
+  FMeasurers := TfrmMeasurers.Create(Application);
   //try
-  with frmMeasurers do
+  with FMeasurers do
   begin
     FormScale(FM,FN);
     //окно открывается как справочник
@@ -176,10 +175,21 @@ begin
 end;
 
 procedure TfrmMain.aMeasureValuesExecute(Sender: TObject);
-var frmMeasureValues: TfrmMeasureValues;
+var i : Integer;
+  FMeasureValues: TfrmMeasureValues;
+
 begin
-  frmMeasureValues := TfrmMeasureValues.Create(Application);
-  frmMeasureValues.FormScale(FM,FN);
+  //Проверим открыт ли уже справочник счетчиков
+  for i := 0 to MDIChildCount - 1 do
+  if MDIChildren[i].Name = 'frmMeasureValues' then
+  begin
+    //Если справочник счетчиков открыт, то сделаем его активным
+    MDIChildren[i].SetFocus;
+    Exit;
+  end;
+
+  FMeasureValues := TfrmMeasureValues.Create(Application);
+  FMeasureValues.FormScale(FM,FN);
 end;
 
 procedure TfrmMain.aNotVerificMeasurersExecute(Sender: TObject);

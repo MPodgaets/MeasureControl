@@ -50,7 +50,7 @@ implementation
 
 {$R *.dfm}
 
-uses DM, System.IniFiles, FireDAC.Stan.Param, uMain;
+uses DM, System.IniFiles, FireDAC.Stan.Param, uMain, System.UITypes;
 
 procedure TfrmUsers.CreateUserExecute(Sender: TObject);
 begin
